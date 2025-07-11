@@ -2,12 +2,12 @@
 
 ## Informações importantes estão presentes neste arquivo. Vale a pena lê-lo.
 
-Este sistema foi desenvolvido por **Ana Paula Gomes de Matos**, **Kassio Gândara de Souza**,**Kaillany Perreira Santos** mais dois integrantes, como parte da disciplina de Banco de Dados, com o objetivo de gerenciar eventos acadêmicos da Universidade de Brasília (UnB). 
+Este sistema foi desenvolvido por **Ana Paula Gomes de Matos**, **Kassio Gândara de Souza**,**Kaillany Perreira Santos**, como parte da disciplina de Banco de Dados, com o objetivo de gerenciar eventos acadêmicos da Universidade de Brasília (UnB). 
 A aplicação permite o cadastro e a visualização de eventos, pessoas e inscrições, com foco em integridade de dados, escalabilidade e possibilidade de análise de métricas futuras.
 
 ---
 
-## 🎯 Nosso Objetivo
+## Nosso Objetivo
 
 Criar um sistema completo e funcional que:
 
@@ -19,7 +19,7 @@ Criar um sistema completo e funcional que:
 
 ---
 
-## 🧠 Modelagem do Banco
+## Modelagem do Banco
 
 O banco foi projetado com **restrições `ON DELETE RESTRICT`** para garantir:
 
@@ -35,9 +35,9 @@ Essa modelagem favorece **análises confiáveis** no futuro, como:
 
 ---
 
-## ⚙️ CRUD: Pessoa, Evento e Inscrição
+## ⚙CRUD: Pessoa, Evento e Inscrição
 
-### 📍 Pessoa (`/pessoa`)
+### Pessoa (`/pessoa`)
 
 - Criação, edição e exclusão de registros.
 - Campos dinâmicos de acordo com o tipo de pessoa: `aluno`, `professor`, `técnico administrativo`, `convidado`.
@@ -46,19 +46,19 @@ Essa modelagem favorece **análises confiáveis** no futuro, como:
   - E-mails e matrículas são **únicos**.
   - `id_departamento` só é obrigatório para professores e técnicos.
 
-🛡️ Exclusão:
+Exclusão:
 - Se a pessoa tiver inscrição, evento ou organização vinculados, a exclusão será **bloqueada** (`RESTRICT`).
 
 ---
 
-### 📍 Evento (`/evento`)
+### Evento (`/evento`)
 
 - Criação com cronograma (PDF), dados de local, responsável e departamento.
 - Edição e exclusão com confirmação.
 - Suporte a várias **atividades**.
 - Responsável deve estar cadastrado como pessoa válida.
 
-📄 PDF:
+PDF:
 - O cronograma é enviado via formulário HTML com `enctype="multipart/form-data"`:
   ```python
   cronograma_file = request.files.get('cronograma')
@@ -73,40 +73,40 @@ Essa modelagem favorece **análises confiáveis** no futuro, como:
       return send_file(BytesIO(blob), ...)
   ```
 
-🛡️ Exclusão:
+Exclusão:
 - Eventos com inscrições, atividades ou organizadores **não podem ser excluídos diretamente**.
 - A aplicação avisa e exige confirmação manual, em conformidade com o `ON DELETE RESTRICT`.
 
 ---
 
-### 📍 Inscrição (`/inscricao`)
+### Inscrição (`/inscricao`)
 
 - Permite inscrever pessoas em eventos ativos.
 - Valida duplicidade e disponibilidade de vagas.
 - Suporte a alteração de status (pendente, confirmado, cancelado) e check-in.
 
-🛡️ Exclusão:
+Exclusão:
 - Inscrições não podem ser removidas se vinculadas a certificados pendentes (por trigger).
 - `certificados_pendentes` usa `ON DELETE CASCADE`, removendo automaticamente os pendentes se a inscrição for apagada.
 
 ---
 
-## 🧩 Procedure: `tentar_inscrever_usuario(p_id_evento, p_cpf)`
+## Procedure: `tentar_inscrever_usuario(p_id_evento, p_cpf)`
 
-📌 Criada diretamente no **banco de dados**, por ser:
+Criada diretamente no **banco de dados**, por ser:
 
 - Mais eficiente e rápida para execução em lote.
 - Mais segura, pois roda diretamente no contexto transacional do banco.
 - Fácil de testar e auditar fora da aplicação.
 
-🔍 Valida:
+Valida:
 
 - Pessoa existe.
 - Evento está ativo.
 - Vaga disponível.
 - Pessoa não inscrita.
 
-🧪 **Exemplos de uso (casos de teste)**:
+**Exemplos de uso (casos de teste)**:
 ```sql
 Exexute na sequencia:
 -- Evento cheio (erro esperado)
@@ -125,15 +125,15 @@ CALL tentar_inscrever_usuario(12, '00100020033');
 
 ---
 
-## 📊 View: `resumo_eventos_com_organizadores`
+## View: `resumo_eventos_com_organizadores`
 
-📌 Criada no banco para:
+Criada no banco para:
 
 - Agregar dados complexos em tempo de execução.
 - Reduzir a lógica no backend.
 - Permitir análise rápida com ferramentas externas (BI, Excel, etc.).
 
-📈 Dados exibidos:
+Dados exibidos:
 
 - Nome e status do evento.
 - Modalidade.
@@ -144,14 +144,14 @@ CALL tentar_inscrever_usuario(12, '00100020033');
 - Vagas restantes.
 - Total de atividades.
 
-📚 Referência técnica usada:  
+Referência técnica usada:  
 https://neon.com/postgresql/postgresql-aggregate-functions/postgresql-string_agg-function
 
 ---
 
-## 🧨 Triggers Criadas (extra)
+## Triggers Criadas (extra)
 
-### 🎓 `trg_gerar_certificados_evento`
+### `trg_gerar_certificados_evento`
 Cria certificados pendentes automaticamente quando o status do evento muda para `concluido`.
 
 ```sql
@@ -162,7 +162,7 @@ WHEN (OLD.status IS DISTINCT FROM NEW.status)
 EXECUTE FUNCTION gerar_certificados_para_evento_concluido();
 ```
 
-### 🧾 `trg_checkin_certificado`
+### `trg_checkin_certificado`
 Gera pendência de certificado quando o participante faz check-in em evento já concluído.
 
 ```sql
@@ -173,12 +173,12 @@ WHEN (OLD.status_checkin_evento IS DISTINCT FROM NEW.status_checkin_evento)
 EXECUTE FUNCTION registrar_certificado_pendente();
 ```
 
-📚 Referência técnica:  
+Referência técnica:  
 https://www.postgresql.org/docs/current/plpgsql-trigger.html
 
 ---
 
-## 🔐 Acesso ao Banco de Dados
+## Acesso ao Banco de Dados
 
 As credenciais para conexão estão disponíveis no arquivo:
 
@@ -186,7 +186,7 @@ As credenciais para conexão estão disponíveis no arquivo:
 app/config.py
 ```
 
-📌 *"Para caso seja difícil de encontrar deixarei ela nesse arquivo, as credenciais."*
+*"Para caso seja difícil de encontrar deixarei ela nesse arquivo, as credenciais."*
 ```python
 DB_NAME = 'postgres'
 DB_USER = 'postgres.rxsowfuvofotbifooljx'
@@ -202,7 +202,7 @@ Essas credenciais podem ser usadas em **pgAdmin, DBeaver ou similar** para compr
 
 ---
 
-## 🌐 Link do Sistema
+## Link do Sistema
 
 Através do seguinte link, é possível **comprovar visualmente** o funcionamento completo do sistema:
 
@@ -216,7 +216,7 @@ Através do seguinte link, é possível **comprovar visualmente** o funcionament
 
 ---
 
-## 📚 Referências Utilizadas
+## Referências Utilizadas
 
 - [PostgreSQL CREATE FUNCTION](https://www.postgresql.org/docs/current/sql-createfunction.html)
 - [PL/pgSQL Triggers](https://www.postgresql.org/docs/current/plpgsql-trigger.html)
